@@ -3,6 +3,25 @@
 	xsi:schemaLocation="http://www.springframework.org/schema/beans
 	http://www.springframework.org/schema/beans/spring-beans-2.5.xsd">
 
+	<!-- Database Example -->
+	<bean id="oracleDataSource" class="org.apache.commons.dbcp.BasicDataSource">
+		<property name="driverClassName" value="oracle.jdbc.driver.OracleDriver" />
+		<property name="initialSize" value="5" />
+		<property name="maxIdle" value="5" />
+		<property name="maxActive" value="10" />
+		<property name="validationQuery" value="SELECT 1 FROM DUAL" />
+	</bean>
+
+	<bean id="oracleDataSourceTemplate" class="org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate">
+		<constructor-arg>
+			<ref bean="oracleDataSource" />
+		</constructor-arg>
+	</bean>
+
+	<bean id="oracleDataSourceProcessor" class="com.zeraholladay.OracleDataSourceProcessor">
+		<property name="oracleDataSourceTemplate" ref="oracleDataSourceTemplate" />
+	</bean>
+
 	<bean id="app" class="com.zeraholladay.App">
 		<property name="name" value="dudly" />
 	</bean>
