@@ -14,29 +14,36 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 public class App {
+	//XXX: Turn to beans!!!
 	private DataSourceProcessor dataSourceProcessor = new DataSourceProcessor();
 	private CallbackHandler callbackHandler = new CallbackHandler();
-	private Map<String, Object> namedParams = new HashMap<>();
+	private OrcWriter orcWriter = new OrcWriter();
+	
+	private Map<String, Object> namedParams = new HashMap<>(); //Not yet implemented
 	private String query;
 
 	void config(String[] args) {
 		Options options = new Options();
 
-		Option url = new Option(null, "url", true, "JBDC URL");
+		Option url = new Option("u", "url", true, "JBDC URL");
 		url.setRequired(true);
 		options.addOption(url);
 		
-		Option username = new Option(null, "username", true, "Username");
+		Option username = new Option("U", "username", true, "Username");
 		username.setRequired(true);
 		options.addOption(username);
 		
-		Option password = new Option(null, "password", true, "Password");
+		Option password = new Option("p", "password", true, "Password");
 		password.setRequired(true);
 		options.addOption(password);
 		
 		Option query = new Option(null, "query", true, "Query");
 		query.setRequired(true);
 		options.addOption(query);
+		
+		Option outfile = new Option("o", "outfile", true, "Outfile");
+		outfile.setRequired(true);
+		options.addOption(outfile);
 
 		CommandLineParser parser = new DefaultParser();
 		HelpFormatter formatter = new HelpFormatter();
@@ -56,6 +63,8 @@ public class App {
 		dataSourceProcessor.setUrl(cmd.getOptionValue("url"));
 		dataSourceProcessor.setUsername(cmd.getOptionValue("username"));
 		dataSourceProcessor.setPassword(cmd.getOptionValue("password"));
+		
+		orcWriter.setOutfile(cmd.getOptionValue("outfile"));
 	}
 
 	void run(ApplicationContext context) {

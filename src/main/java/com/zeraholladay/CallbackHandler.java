@@ -9,11 +9,13 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
 
 public class CallbackHandler implements ResultSetExtractor {
+	private OrcWriter orcWriter;
+
 	@Override
 	public Object extractData(ResultSet resultSet) throws SQLException, DataAccessException {
 		ResultSetMetaData metaData = resultSet.getMetaData();
+		orcWriter.setMetaData(metaData);
 
-		OrcWriter orcWriter = new OrcWriter(metaData);
 		try {
 			orcWriter.build();
 		} catch (IllegalArgumentException | IOException e) {
@@ -36,4 +38,13 @@ public class CallbackHandler implements ResultSetExtractor {
 		}
 		return null;
 	}
+
+	public OrcWriter getOrcWriter() {
+		return orcWriter;
+	}
+
+	public void setOrcWriter(OrcWriter orcWriter) {
+		this.orcWriter = orcWriter;
+	}
+
 }

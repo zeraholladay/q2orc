@@ -10,6 +10,7 @@ public class DataSourceProcessor {
 	private String password = null;
 	
 	public NamedParameterJdbcTemplate createSourceTemplate(ApplicationContext context) {
+		//XXX: Want all of the data source types injected!!!
 		BasicDataSource dataSource = (BasicDataSource) context.getBean("oracleDataSource");
 		dataSource.setUrl(getUrl());
 		dataSource.setUsername(getUsername());

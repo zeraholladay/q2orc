@@ -1,7 +1,6 @@
 package com.zeraholladay;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -18,6 +17,8 @@ import org.apache.orc.TypeDescription;
 import org.apache.orc.Writer;
 
 public class OrcWriter {
+	private String outfile;
+	
 	private ResultSetMetaData metaData;
 	private VectorizedRowBatch batch;
 	private Writer writer;
@@ -25,10 +26,6 @@ public class OrcWriter {
 	private Configuration conf = new Configuration();
 	private TypeDescription schema = TypeDescription.createStruct();
 
-	public OrcWriter(ResultSetMetaData metaData) {
-		this.metaData = metaData;
-	}
-	
 	public void build() throws SQLException, IllegalArgumentException, IOException {
 		for (int columnIndex = 0; columnIndex < metaData.getColumnCount(); columnIndex++) {
 			String columnName = metaData.getColumnName(columnIndex);
@@ -78,7 +75,7 @@ public class OrcWriter {
 
 			batch = schema.createRowBatch();
 		}
-		writer = OrcFile.createWriter(new Path("/tmp/my-file.orc"), OrcFile.writerOptions(conf).setSchema(schema));
+		writer = OrcFile.createWriter(new Path(getOutfile()), OrcFile.writerOptions(conf).setSchema(schema));
 	}
 
 	public void split(ResultSet resultSet, int columnIndex) throws SQLException, IOException {
@@ -171,5 +168,21 @@ public class OrcWriter {
 		TimestampColumnVector vector = (TimestampColumnVector) batch.cols[columnIndex];
 		vector.time[batch.size] = cell.getTime();
 		vector.nanos[batch.size] = cell.getNanos();
+	}
+
+	public ResultSetMetaData getMetaData() {
+		return metaData;
+	}
+
+	public void setMetaData(ResultSetMetaData metaData) {
+		this.metaData = metaData;
+	}
+
+	public String getOutfile() {
+		return outfile;
+	}
+
+	public void setOutfile(String outfile) {
+		this.outfile = outfile;
 	}
 }
