@@ -13,12 +13,13 @@ import org.apache.hadoop.hive.ql.exec.vector.LongColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.TimestampColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.VectorizedRowBatch;
 import org.apache.orc.OrcFile;
+import org.apache.orc.OrcFile.WriterOptions;
 import org.apache.orc.TypeDescription;
 import org.apache.orc.Writer;
 
 public class OrcWriter {
 	private String outfile;
-	
+
 	private ResultSetMetaData metaData;
 	private VectorizedRowBatch batch;
 	private Writer writer;
@@ -26,8 +27,10 @@ public class OrcWriter {
 	private Configuration conf = new Configuration();
 	private TypeDescription schema = TypeDescription.createStruct();
 
-	public void build() throws SQLException, IllegalArgumentException, IOException {
-		for (int columnIndex = 0; columnIndex < metaData.getColumnCount(); columnIndex++) {
+	public void build() throws SQLException, IllegalArgumentException,
+			IOException {
+		int columnCount = metaData.getColumnCount() + 1;
+		for (int columnIndex = 1; columnIndex < columnCount; columnIndex++) {
 			String columnName = metaData.getColumnName(columnIndex);
 			switch (metaData.getColumnType(columnIndex)) {
 			case java.sql.Types.CHAR:
@@ -72,13 +75,20 @@ public class OrcWriter {
 			default:
 				throw new SQLException("Unmapped type!");
 			}
-
-			batch = schema.createRowBatch();
 		}
-		writer = OrcFile.createWriter(new Path(getOutfile()), OrcFile.writerOptions(conf).setSchema(schema));
+		System.out.println("**Conf: " + conf);
+		System.out.println("**Schema: " + schema);
+
+		Path path = new Path(getOutfile());
+		WriterOptions writerOptions = OrcFile.writerOptions(conf).setSchema(schema);
+		
+		writer = OrcFile.createWriter(path, writerOptions);
+		
+		batch = schema.createRowBatch();
 	}
 
-	public void split(ResultSet resultSet, int columnIndex) throws SQLException, IOException {
+	public void split(ResultSet resultSet, int columnIndex)
+			throws SQLException, IOException {
 		switch (metaData.getColumnType(columnIndex)) {
 		case java.sql.Types.CHAR:
 		case java.sql.Types.VARCHAR:
@@ -120,14 +130,13 @@ public class OrcWriter {
 		default:
 			throw new SQLException("Unmapped type!");
 		}
-		
 
 		if (++batch.size == batch.getMaxSize()) {
 			writer.addRowBatch(batch);
 			batch.reset();
 		}
 	}
-	
+
 	public void close() throws IOException {
 		if (batch.size != 0) {
 			writer.addRowBatch(batch);
@@ -145,21 +154,21 @@ public class OrcWriter {
 		LongColumnVector vector = (LongColumnVector) batch.cols[columnIndex];
 		vector.vector[batch.size] = cell ? 1 : 0;
 	}
-	
+
 	private void write(long cell, int columnIndex) {
 		LongColumnVector vector = (LongColumnVector) batch.cols[columnIndex];
-		vector.vector[batch.size] =  cell;
+		vector.vector[batch.size] = cell;
 	}
-	
+
 	private void write(double cell, int columnIndex) {
 		DoubleColumnVector vector = (DoubleColumnVector) batch.cols[columnIndex];
-		vector.vector[batch.size] =  cell;
+		vector.vector[batch.size] = cell;
 	}
-	
+
 	private void write(java.sql.Date cell, int columnIndex) {
 		write(cell.getTime(), columnIndex);
 	}
-	
+
 	private void write(java.sql.Time cell, int columnIndex) {
 		write(cell.getTime(), columnIndex);
 	}

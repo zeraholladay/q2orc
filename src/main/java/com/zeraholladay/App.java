@@ -37,7 +37,7 @@ public class App {
 		password.setRequired(true);
 		options.addOption(password);
 		
-		Option query = new Option(null, "query", true, "Query");
+		Option query = new Option("q", "query", true, "Query");
 		query.setRequired(true);
 		options.addOption(query);
 		
@@ -65,6 +65,7 @@ public class App {
 		dataSourceProcessor.setPassword(cmd.getOptionValue("password"));
 		
 		orcWriter.setOutfile(cmd.getOptionValue("outfile"));
+		callbackHandler.setOrcWriter(orcWriter);
 	}
 
 	void run(ApplicationContext context) {

@@ -18,8 +18,12 @@ public class CallbackHandler implements ResultSetExtractor {
 
 		try {
 			orcWriter.build();
-		} catch (IllegalArgumentException | IOException e) {
-			throw new SQLException("IllegalArgumentException or IOException!!!");
+		} catch (IllegalArgumentException e) {
+			e.printStackTrace();
+			throw new SQLException("IllegalArgumentException!!!");
+		} catch (IOException e) {
+			e.printStackTrace();
+			throw new SQLException("IOException!!!");
 		}
 
 		while (resultSet.next()) {
