@@ -76,61 +76,61 @@ public class OrcWriter {
 				throw new SQLException("Unmapped type!");
 			}
 		}
-		System.out.println("**Conf: " + conf);
-		System.out.println("**Schema: " + schema);
 
 		Path path = new Path(getOutfile());
-		WriterOptions writerOptions = OrcFile.writerOptions(conf).setSchema(schema);
-		
+		WriterOptions writerOptions = OrcFile.writerOptions(conf).setSchema(
+				schema);
+
 		writer = OrcFile.createWriter(path, writerOptions);
-		
+
 		batch = schema.createRowBatch();
 	}
 
-	public void split(ResultSet resultSet, int columnIndex)
-			throws SQLException, IOException {
-		switch (metaData.getColumnType(columnIndex)) {
-		case java.sql.Types.CHAR:
-		case java.sql.Types.VARCHAR:
-		case java.sql.Types.LONGVARCHAR:
-			write(resultSet.getString(columnIndex).getBytes(), columnIndex);
-			break;
-		case java.sql.Types.NUMERIC:
-		case java.sql.Types.DECIMAL:
-			write(resultSet.getString(columnIndex).getBytes(), columnIndex);
-			break;
-		case java.sql.Types.BIT:
-			write(resultSet.getBoolean(columnIndex), columnIndex);
-			break;
-		case java.sql.Types.TINYINT:
-		case java.sql.Types.SMALLINT:
-		case java.sql.Types.INTEGER:
-		case java.sql.Types.BIGINT:
-			write(resultSet.getLong(columnIndex), columnIndex);
-			break;
-		case java.sql.Types.REAL:
-		case java.sql.Types.FLOAT:
-		case java.sql.Types.DOUBLE:
-			write(resultSet.getDouble(columnIndex), columnIndex);
-			break;
-		case java.sql.Types.BINARY:
-		case java.sql.Types.VARBINARY:
-		case java.sql.Types.LONGVARBINARY:
-			write(resultSet.getBytes(columnIndex), columnIndex);
-			break;
-		case java.sql.Types.DATE:
-			write(resultSet.getDate(columnIndex), columnIndex);
-			break;
-		case java.sql.Types.TIME:
-			write(resultSet.getTime(columnIndex), columnIndex);
-			break;
-		case java.sql.Types.TIMESTAMP:
-			write(resultSet.getTimestamp(columnIndex), columnIndex);
-			break;
-		default:
-			throw new SQLException("Unmapped type!");
+	public void split(ResultSet row) throws SQLException, IOException {
+		int columnCount = metaData.getColumnCount() + 1;
+		for (int columnIndex = 1; columnIndex < columnCount; columnIndex++) {
+			switch (metaData.getColumnType(columnIndex)) {
+			case java.sql.Types.CHAR:
+			case java.sql.Types.VARCHAR:
+			case java.sql.Types.LONGVARCHAR:
+				write(row.getString(columnIndex), columnIndex - 1);
+				break;
+			case java.sql.Types.NUMERIC:
+			case java.sql.Types.DECIMAL:
+				write(row.getString(columnIndex), columnIndex - 1);
+				break;
+			case java.sql.Types.BIT:
+				write(row.getBoolean(columnIndex), columnIndex - 1);
+				break;
+			case java.sql.Types.TINYINT:
+			case java.sql.Types.SMALLINT:
+			case java.sql.Types.INTEGER:
+			case java.sql.Types.BIGINT:
+				write(row.getLong(columnIndex), columnIndex - 1);
+				break;
+			case java.sql.Types.REAL:
+			case java.sql.Types.FLOAT:
+			case java.sql.Types.DOUBLE:
+				write(row.getDouble(columnIndex), columnIndex - 1);
+				break;
+			case java.sql.Types.BINARY:
+			case java.sql.Types.VARBINARY:
+			case java.sql.Types.LONGVARBINARY:
+				write(row.getBytes(columnIndex), columnIndex - 1);
+				break;
+			case java.sql.Types.DATE:
+				write(row.getDate(columnIndex), columnIndex - 1);
+				break;
+			case java.sql.Types.TIME:
+				write(row.getTime(columnIndex), columnIndex - 1);
+				break;
+			case java.sql.Types.TIMESTAMP:
+				write(row.getTimestamp(columnIndex), columnIndex - 1);
+				break;
+			default:
+				throw new SQLException("Unmapped type!");
+			}
 		}
-
 		if (++batch.size == batch.getMaxSize()) {
 			writer.addRowBatch(batch);
 			batch.reset();
@@ -148,6 +148,14 @@ public class OrcWriter {
 	private void write(byte[] cell, int columnIndex) throws IOException {
 		BytesColumnVector stringVector = (BytesColumnVector) batch.cols[columnIndex];
 		stringVector.setVal(batch.size, cell);
+	}
+
+	private void write(String cell, int columnIndex) throws IOException {
+		if (null == cell) {
+			cell = "";
+		}
+		BytesColumnVector stringVector = (BytesColumnVector) batch.cols[columnIndex];
+		stringVector.setVal(batch.size, cell.getBytes());
 	}
 
 	private void write(boolean cell, int columnIndex) {
